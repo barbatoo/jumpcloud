@@ -4,54 +4,48 @@
 ## this script defines the hostname of the Macbook based on the spreadsheet you want, relating the second column with the first
 ## its necessary have a third column, even though it's blank
 
-# download spreadsheet
-curl -L 'https://docs.google.com/spreadsheets/d/ID_DA_PLANILHA/export?format=csv' -o /tmp/teste.csv
+# URL of the CSV spreadsheet
+spreadsheet_url='https://docs.google.com/spreadsheets/d/ID_SPREADSHEET/export?format=csv'
 
-# spreadsheet
-output=$(cat /tmp/teste.csv)
+# Download the CSV spreadsheet to /tmp
+curl -L "$spreadsheet_url" -o /tmp/teste.csv || { echo "Error downloading the CSV spreadsheet."; exit 1; }
 
-# indicators
-SERIAL=$(ioreg -l | grep IOPlatformSerialNumber | awk -F\" '/IOPlatformSerialNumber/{print $4}')
-HOSTNAME=$(echo "$output" | awk -F ',' -v col1="$SERIAL" '$1 == col1 {print $2}')
+# Read the content of the CSV spreadsheet
+spreadsheet=$(cat /tmp/teste.csv)
 
-# check if the serial of the current Macbook is in the spreadsheet, and define his HostName based on it
-# and defines if the hostname that was asked to be defined, matches the one defined
-if [ -n "$HOSTNAME" ]; then
-    sudo scutil --set HostName $HOSTNAME
+# Get the serial number of the MacBook
+serial=$(ioreg -l | grep IOPlatformSerialNumber | awk -F\" '/IOPlatformSerialNumber/{print $4}')
 
-    sleep 0.5
+# Get the hostname based on the serial number
+hostname=$(echo "$spreadsheet" | awk -F ',' -v col1="$serial" '$1 == col1 {print $2}')
 
-    sudo scutil --set ComputerName $HOSTNAME
-
-    sleep 0.5
-
-    sudo scutil --set LocalHostName $HOSTNAME
-
-    sleep 0.5
-
-    echo "O HostName foi definido!"
-
-    rm -rf /tmp/teste.csv
+# Set the hostname, ComputerName, and LocalHostName
+if [ -n "$hostname" ]; then
+    sudo scutil --set HostName "$hostname"
+    sudo scutil --set ComputerName "$hostname"
+    sudo scutil --set LocalHostName "$hostname"
+    echo "The hostname has been set to: $hostname"
 else
-    # if the serial of the current Macbook is not in the spreadsheet, it shows this error message
-    echo "Serial NÃO está na planilha"
-
+    echo "The serial number is not in the CSV spreadsheet."
     rm -rf /tmp/teste.csv
     exit 1
 fi
 
-# Wait 5 seconds before run the next script
+# Wait for 5 seconds before proceeding
 sleep 5
 echo ""
 
-# Script 2
+# Script 2: Update the displayName in JumpCloud
 
-# indicators
-apiKey="SUA_API_KEY"
-orgID="SEU_ORG_ID"
+# API Key and JumpCloud organization ID
+apiKey="YOUR_API_KEY"
+orgID="YOUR_ORG_ID"
+
+# Get the hostname and systemID
 hostName=$(hostname)
+systemID=$(sudo cat /opt/jc/jcagent.conf | grep -o '"systemKey":"[^"]*' | awk -F ':"' '{print $2}')
 
-# function to extract the value of JSON
+# Function to extract the value from JSON
 extractValue() {
     local json="$1"
     local key="$2"
@@ -59,50 +53,35 @@ extractValue() {
     echo "$value"
 }
 
-# function to call API GET
-apiGet() {
-    response=$(curl \
-      -X GET "https://console.jumpcloud.com/api/systems/?filter=serialNumber:${SERIAL}" \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -H "x-api-key: ${apiKey}" \
-      -H "x-org-id: ${orgID}")
-
-    # extract the systemID of JSON
-    systemID=$(extractValue "$response" "id")
-
-    echo "$systemID"
-}
-
-# function to call the API PUT to update the displayName
+# Function to call the API PUT to update the displayName
 apiPut() {
-    local systemID="$1"
     local newDisplayName="$2"
+    local systemID="$1"
 
-    # Mount JSON to update the displayName
+    # Construct JSON to update the displayName
     updateData="{ \"displayName\": \"$newDisplayName\" }"
 
-    # Call a PUT to update the displayName
-    curl \
-      -X PUT "https://console.jumpcloud.com/api/systems/$systemID" \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -H "x-api-key: ${apiKey}" \
-      -H "x-org-id: ${orgID}" \
-      --data "$updateData"
+    # Call PUT to update the displayName
+    curl -X PUT "https://console.jumpcloud.com/api/systems/$systemID" \
+         -H 'Content-Type: application/json' \
+         -H 'Accept: application/json' \
+         -H "x-api-key: $apiKey" \
+         -H "x-org-id: $orgID" \
+         --data "$updateData"
 }
 
-# call to function of API GET to obtain the systemID
-systemID=$(apiGet)
-
+# Check if the systemID was obtained
 if [ -n "$systemID" ]; then
-    # define the new displayName
+    # Set the new displayName as the hostname
     newDisplayName="$hostName"
 
-    # call the function of API PUT to update the displayName
+    # Call the apiPut function to update the displayName
     apiPut "$systemID" "$newDisplayName"
 
-    echo "O displayName foi atualizado para: $newDisplayName"
+    echo "The displayName has been updated to: $newDisplayName"
 else
-    echo "Não foi possível obter o systemID."
+    echo "Failed to obtain the systemID."
 fi
+
+# Clean up the temporary CSV file
+rm -rf /tmp/teste.csv
