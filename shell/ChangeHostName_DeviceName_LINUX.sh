@@ -6,7 +6,7 @@
 
 # Script 1
 # download spreadsheet
-curl -L 'https://docs.google.com/spreadsheets/d/ID_DA_PLANILHA/export?format=csv' -o /tmp/teste.csv
+curl -L 'https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/export?format=csv' -o /tmp/teste.csv
 
 # spreadsheet
 output=$(cat /tmp/teste.csv)
@@ -42,8 +42,8 @@ echo ""
 # Script 2
 
 # indicators
-apiKey="SUA_API_KEY"
-orgID="SEU_ORG_ID"
+apiKey="YOUR_API_KEY"
+orgID="YOUR_ORG_ID"
 
 # function to extract the value of JSON
 extractValue() {

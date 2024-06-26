@@ -5,7 +5,7 @@
 ## its necessary have a third column, even though it's blank
 
 # URL of the CSV spreadsheet
-spreadsheet_url='https://docs.google.com/spreadsheets/d/ID_SPREADSHEET/export?format=csv'
+spreadsheet_url='https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/export?format=csv'
 
 # Download the CSV spreadsheet to /tmp
 curl -L "$spreadsheet_url" -o /tmp/teste.csv || { echo "Error downloading the CSV spreadsheet."; exit 1; }

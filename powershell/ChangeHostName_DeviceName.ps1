@@ -4,7 +4,7 @@
 
 # Script 1
 # download spreadsheet
-$planilhaURL = 'https://docs.google.com/spreadsheets/d/ID_DA_PLANILHA/export?format=csv'
+$planilhaURL = 'https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/export?format=csv'
 
 # spreadsheet
 $csvFilePath = 'C:\Users\planilha.csv'
@@ -17,6 +17,7 @@ $csvData = Import-Csv -Path $csvFilePath
 $Serial = (Get-WmiObject -Class Win32_BIOS).SerialNumber
 
 # check if the serial of the current device is in the spreadsheet, and define his HostName based on it
+# change the “Hostname” at the end of the line to the name of the second column
 $Hostname = $csvData | Where-Object { $_.Serial -eq $Serial } | Select-Object -ExpandProperty Hostname
 
 # define a new hostname
@@ -28,8 +29,8 @@ Write-Host "O computador foi renomeado para: $Hostname"
 Write-Host ""
 
 # Script 2
-$apiKey="SUA_API_KEY"
-$orgID="SEU_ORG_ID"
+$apiKey="YOUR_API_KEY"
+$orgID="YOUR_ORG_ID"
 
 $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 $headers.Add("x-org-id", "$orgID")
