@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Created by Gabriel Barbato - https://github.com/barbatoo
-## this script defines the hostname of the Macbook based on the spreadsheet you want, relating the second column with the first
+## this script defines the hostname of the Linux based on the spreadsheet you want, relating the second column with the first
 ## its necessary have a third column, even though it's blank
 
 # Script 1
